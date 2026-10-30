@@ -5,6 +5,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import f1_score, roc_auc_score, confusion_matrix
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 warnings.filterwarnings('ignore')
 
@@ -92,3 +94,59 @@ def train_gaussienbayes(X,y):
     metrikler = {"F1": f1, "AUC": auc, "CM": cm}
     return metrikler, gnb, scaler
 
+
+def train_knn_classifier(X, y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    # N_neighbors varsayılan olarak 5 alınır
+    knn = KNeighborsClassifier(n_neighbors=5)
+    knn.fit(X_train_scaled, y_train)
+    y_pred = knn.predict(X_test_scaled)
+    
+    f1 = f1_score(y_test, y_pred, average='weighted')
+    cm = confusion_matrix(y_test, y_pred)
+    
+    try:
+        y_prob = knn.predict_proba(X_test_scaled)
+        if len(knn.classes_) == 2:
+            auc = roc_auc_score(y_test, y_prob[:, 1])
+        else:
+            auc = roc_auc_score(y_test, y_prob, multi_class='ovr')
+        auc = round(auc, 4)
+    except:
+        auc = "Hesaplanamadı"
+
+    metrikler = {"F1": f1, "AUC": auc, "CM": cm}
+    return metrikler, knn, scaler
+
+def train_random_forest_classifier(X, y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    # Random Forest sınıflandırıcısı
+    rf = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf.fit(X_train_scaled, y_train)
+    y_pred = rf.predict(X_test_scaled)
+    
+    f1 = f1_score(y_test, y_pred, average='weighted')
+    cm = confusion_matrix(y_test, y_pred)
+    
+    try:
+        y_prob = rf.predict_proba(X_test_scaled)
+        if len(rf.classes_) == 2:
+            auc = roc_auc_score(y_test, y_prob[:, 1])
+        else:
+            auc = roc_auc_score(y_test, y_prob, multi_class='ovr')
+        auc = round(auc, 4)
+    except:
+        auc = "Hesaplanamadı"
+
+    metrikler = {"F1": f1, "AUC": auc, "CM": cm}
+    return metrikler, rf, scaler
