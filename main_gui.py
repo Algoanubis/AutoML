@@ -2,8 +2,8 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 import os
 from data_processor import load_and_prepare_data, get_column_names
-from models_classification import train_logistic_regression, train_svc, train_gaussienbayes
-from models_regression import train_linear_regression, train_svr
+from models_classification import train_logistic_regression, train_svc, train_gaussienbayes, train_knn_classifier, train_random_forest_classifier
+from models_regression import train_linear_regression, train_svr, train_knn_regression, train_random_forest_regression
 
 class AutoMLApp(ctk.CTk):
     def __init__(self):
@@ -34,46 +34,74 @@ class AutoMLApp(ctk.CTk):
         self.label_dosya_yolu = ctk.CTkLabel(self, text="Selected File: None", text_color="gray", font=("Arial", 14))
         self.label_dosya_yolu.pack(pady=10)
         
-        # --- 3. MODELS (5 Buttons Grid) ---
+        # --- 3. MODELLER (Grid Yapısı) ---
         self.frame_modeller = ctk.CTkFrame(self)
-        self.frame_modeller.pack(pady=40, padx=60, fill="both", expand=True)
+        self.frame_modeller.pack(pady=30, padx=40, fill="both", expand=True)
         
-        # Sütunları merkeze hizalamak için esneklik veriyoruz
+        # Grid yapısını orantılı bölmek için (3 sütun)
         self.frame_modeller.grid_columnconfigure(0, weight=1)
         self.frame_modeller.grid_columnconfigure(1, weight=1)
+        self.frame_modeller.grid_columnconfigure(2, weight=1)
         
-        # Sınıflandırma Butonları (Mavi)
-        self.btn_logistic = ctk.CTkButton(self.frame_modeller, text="Train Logistic Regression", 
-                                          font=("Arial", 18, "bold"), width=320, height=80,
+        # --- SINIFLANDIRMA MODELLERİ (Mavi - Üst Satırlar) ---
+        lbl_class = ctk.CTkLabel(self.frame_modeller, text="Classification Models", font=("Arial", 16, "bold"))
+        lbl_class.grid(row=0, column=0, columnspan=3, pady=(15,5))
+
+        self.btn_logistic = ctk.CTkButton(self.frame_modeller, text="Logistic Regression", 
+                                          font=("Arial", 16, "bold"), height=50,
                                           command=self.run_logistic)
-        self.btn_logistic.grid(row=0, column=0, padx=30, pady=20)
+        self.btn_logistic.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         
-        self.btn_svc = ctk.CTkButton(self.frame_modeller, text="Train SVC (Classification)", 
-                                     font=("Arial", 18, "bold"), width=320, height=80,
+        self.btn_svc = ctk.CTkButton(self.frame_modeller, text="SVC", 
+                                     font=("Arial", 16, "bold"), height=50,
                                      command=self.run_svc)
-        self.btn_svc.grid(row=0, column=1, padx=30, pady=20)
+        self.btn_svc.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
         
-        # --- YENİ: GAUSSIAN NAIVE BAYES BUTONU ---
-        self.btn_gnb = ctk.CTkButton(self.frame_modeller, text="Train Gaussian NB (Classification)", 
-                                     font=("Arial", 18, "bold"), width=320, height=80,
+        self.btn_gnb = ctk.CTkButton(self.frame_modeller, text="Gaussian NB", 
+                                     font=("Arial", 16, "bold"), height=50,
                                      command=self.run_gaussienNB)
-        # columnspan=2 ile butonu iki sütunun tam ortasına yayıyoruz
-        self.btn_gnb.grid(row=1, column=0, columnspan=2, padx=30, pady=20)
-        
-        # Regresyon Butonları (Turuncu)
-        self.btn_linear = ctk.CTkButton(self.frame_modeller, text="Train Linear Regression", 
-                                        font=("Arial", 18, "bold"), width=320, height=80,
+        self.btn_gnb.grid(row=1, column=2, padx=10, pady=10, sticky="ew")
+
+        self.btn_knn_cls = ctk.CTkButton(self.frame_modeller, text="KNN Classifier", 
+                                         font=("Arial", 16, "bold"), height=50,
+                                         command=self.run_knn_classifier)
+        # Alt satıra ortalayarak (columnspan=2 ile de yapılabilir ama ortadaki sütuna koymak şık olur)
+        self.btn_knn_cls.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+
+        self.btn_rf_cls = ctk.CTkButton(self.frame_modeller, text="Random Forest Classifier", 
+                                        font=("Arial", 16, "bold"), height=50,
+                                        command=self.run_randomforest_classifier)
+        self.btn_rf_cls.grid(row=2, column=1, columnspan=2, padx=10, pady=10, sticky="ew")
+
+        # --- REGRESYON MODELLERİ (Turuncu - Alt Satırlar) ---
+        lbl_reg = ctk.CTkLabel(self.frame_modeller, text="Regression Models", font=("Arial", 16, "bold"))
+        lbl_reg.grid(row=3, column=0, columnspan=3, pady=(25,5))
+
+        self.btn_linear = ctk.CTkButton(self.frame_modeller, text="Linear Regression", 
+                                        font=("Arial", 16, "bold"), height=50,
                                         fg_color="#d35400", hover_color="#e67e22", 
                                         command=self.run_linear)
-        self.btn_linear.grid(row=2, column=0, padx=30, pady=20)
+        self.btn_linear.grid(row=4, column=0, padx=10, pady=10, sticky="ew")
         
-        self.btn_svr = ctk.CTkButton(self.frame_modeller, text="Train SVR (Regression)", 
-                                     font=("Arial", 18, "bold"), width=320, height=80,
+        self.btn_svr = ctk.CTkButton(self.frame_modeller, text="SVR", 
+                                     font=("Arial", 16, "bold"), height=50,
                                      fg_color="#d35400", hover_color="#e67e22", 
                                      command=self.run_svr)
-        self.btn_svr.grid(row=2, column=1, padx=30, pady=20)
-        
+        self.btn_svr.grid(row=4, column=1, padx=10, pady=10, sticky="ew")
+
+        self.btn_knn_reg = ctk.CTkButton(self.frame_modeller, text="KNN Regression", 
+                                         font=("Arial", 16, "bold"), height=50,
+                                         fg_color="#d35400", hover_color="#e67e22", 
+                                         command=self.run_knn_regression)
+        self.btn_knn_reg.grid(row=4, column=2, padx=10, pady=10, sticky="ew")
+
+        self.btn_rf_reg = ctk.CTkButton(self.frame_modeller, text="Random Forest Regression", 
+                                        font=("Arial", 16, "bold"), height=50,
+                                        fg_color="#d35400", hover_color="#e67e22", 
+                                        command=self.run_randomforest_regression)
+        self.btn_rf_reg.grid(row=5, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
         self.secilen_dosya_yolu = None
+        
     def dosya_sec(self):
         # Opens the standard OS file dialog
         dosya = filedialog.askopenfilename(
@@ -311,7 +339,171 @@ class AutoMLApp(ctk.CTk):
                                                            
                 except Exception as e:
                     messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
-       
+
+    def run_knn_classifier(self):
+            # 1. SECURITY CHECKS
+                if not self.secilen_dosya_yolu:
+                    messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+                    return
+                
+                hedef_sutun = self.combo_hedef.get() 
+                if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+                    messagebox.showerror("Missing Information", "Please select a valid target column!")
+                    return
+                
+                # 2. DATA PREPARATION
+                basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
+                if not basarili_mi:
+                    messagebox.showerror("Data Error", sonuc)
+                    return
+                    
+                X, y = sonuc
+        
+                # 3. ENGINE IGNITION
+                try: 
+                    metrikler, model, scaler = train_knn_classifier(X,y)
+                    
+                    self.aktif_model = model
+                    self.aktif_scaler = scaler
+                    self.aktif_model_tipi = "KNN Classifier"
+        
+                    f1 = metrikler["F1"]
+                    auc = metrikler["AUC"]
+                    cm = metrikler["CM"]
+                    
+                    mesaj = f"F1 Skoru: {f1:.4f}\nAUC: {auc}\n\nKarmaşıklık Matrisi (Confusion Matrix):\n{cm}"
+                                
+                    if f1 >= 0.80:
+                        messagebox.showinfo("Model Başarılı!", f"Harika! KNN Classifier modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                    else:
+                        messagebox.showwarning("Düşük Başarı", f"KNN Classifier modeli başarıyla eğitildi ancak skor düşük.\n\n{mesaj}")
+                                                           
+                except Exception as e:
+                    messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")      
+                                        
+    def run_randomforest_classifier(self):
+                # 1. SECURITY CHECKS
+                    if not self.secilen_dosya_yolu:
+                        messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+                        return
+                    
+                    hedef_sutun = self.combo_hedef.get() 
+                    if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+                        messagebox.showerror("Missing Information", "Please select a valid target column!")
+                        return
+                    
+                    # 2. DATA PREPARATION
+                    basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
+                    if not basarili_mi:
+                        messagebox.showerror("Data Error", sonuc)
+                        return
+                        
+                    X, y = sonuc
+            
+                    # 3. ENGINE IGNITION
+                    try: 
+                        metrikler, model, scaler = train_random_forest_classifier(X,y)
+                        
+                        self.aktif_model = model
+                        self.aktif_scaler = scaler
+                        self.aktif_model_tipi = "Random Forest Classifier"
+            
+                        f1 = metrikler["F1"]
+                        auc = metrikler["AUC"]
+                        cm = metrikler["CM"]
+                        
+                        mesaj = f"F1 Skoru: {f1:.4f}\nAUC: {auc}\n\nKarmaşıklık Matrisi (Confusion Matrix):\n{cm}"
+                                    
+                        if f1 >= 0.80:
+                            messagebox.showinfo("Model Başarılı!", f"Harika! Random Forest Classifier modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                        else:
+                            messagebox.showwarning("Düşük Başarı", f"Random Forest Classifier modeli başarıyla eğitildi ancak skor düşük.\n\n{mesaj}")
+                                                               
+                    except Exception as e:
+                        messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")      
+               
+    def run_knn_regression(self):
+                # 1. SECURITY CHECKS
+                    if not self.secilen_dosya_yolu:
+                        messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+                        return
+                    
+                    hedef_sutun = self.combo_hedef.get() 
+                    if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+                        messagebox.showerror("Missing Information", "Please select a valid target column!")
+                        return
+                    
+                    # 2. DATA PREPARATION
+                    basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
+                    if not basarili_mi:
+                        messagebox.showerror("Data Error", sonuc)
+                        return
+                        
+                    X, y = sonuc
+            
+                    # 3. ENGINE IGNITION
+                    try: 
+                        metrikler, model, scaler = train_knn_regression(X,y)
+                        
+                        self.aktif_model = model
+                        self.aktif_scaler = scaler
+                        self.aktif_model_tipi = "KNN Regression"
+            
+                        r2 = metrikler["R2"]
+                        mae = metrikler["MAE"]
+                        mse = metrikler["MSE"]
+                        
+                        mesaj = f"R2 Skoru: {r2:.4f}\nOrtalama Mutlak Hata (MAE): {mae:.4f}\nOrtalama Kare Hata (MSE): {mse:.4f}"
+                                    
+                        if r2 >= 0.80:
+                            messagebox.showinfo("Model Başarılı!", f"Harika! KNN Regression modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                        else:
+                            messagebox.showwarning("Düşük Başarı", f"KNN Regression modeli başarıyla eğitildi ancak skor düşük.\n\n{mesaj}")
+                                                               
+                    except Exception as e:
+                        messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")      
+                                               
+    def run_randomforest_regression(self):
+                    # 1. SECURITY CHECKS
+                        if not self.secilen_dosya_yolu:
+                            messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+                            return
+                        
+                        hedef_sutun = self.combo_hedef.get() 
+                        if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+                            messagebox.showerror("Missing Information", "Please select a valid target column!")
+                            return
+                        
+                        # 2. DATA PREPARATION
+                        basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
+                        if not basarili_mi:
+                            messagebox.showerror("Data Error", sonuc)
+                            return
+                            
+                        X, y = sonuc
+                
+                        # 3. ENGINE IGNITION
+                        try: 
+                            metrikler, model, scaler = train_random_forest_regression(X,y)
+                            
+                            self.aktif_model = model
+                            self.aktif_scaler = scaler
+                            self.aktif_model_tipi = "Random Forest Regression"
+                
+                            r2 = metrikler["R2"]
+                            mae = metrikler["MAE"]
+                            mse = metrikler["MSE"]
+                            
+                            mesaj = f"R2 Skoru: {r2:.4f}\nOrtalama Mutlak Hata (MAE): {mae:.4f}\nOrtalama Kare Hata (MSE): {mse:.4f}"
+                                        
+                            if r2 >= 0.80:
+                                messagebox.showinfo("Model Başarılı!", f"Harika! Random Forest Regression modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                            else:
+                                messagebox.showwarning("Düşük Başarı", f"Random Forest Regression modeli başarıyla eğitildi ancak skor düşük.\n\n{mesaj}")
+                                                                   
+                        except Exception as e:
+                            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")      
+                      
                 
 
 if __name__ == "__main__":
