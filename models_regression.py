@@ -5,6 +5,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 
 warnings.filterwarnings('ignore')
@@ -83,3 +85,40 @@ def train_random_forest_regression(X, y):
 
     metrikler = {"R2": r2, "MAE": mae, "MSE": mse}
     return metrikler, rf, scaler
+
+def train_xgboost_regression(X, y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    xgb = XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
+    xgb.fit(X_train_scaled, y_train)
+    y_pred = xgb.predict(X_test_scaled)
+
+    r2 = r2_score(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+
+    metrikler = {"R2": r2, "MAE": mae, "MSE": mse}
+    return metrikler, xgb, scaler
+
+
+def train_lightgbm_regression(X, y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    lgbm = LGBMRegressor(n_estimators=100, learning_rate=0.1, random_state=42, verbose=-1)
+    lgbm.fit(X_train_scaled, y_train)
+    y_pred = lgbm.predict(X_test_scaled)
+
+    r2 = r2_score(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+
+    metrikler = {"R2": r2, "MAE": mae, "MSE": mse}
+    return metrikler, lgbm, scaler
