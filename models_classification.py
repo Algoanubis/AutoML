@@ -1,12 +1,14 @@
 import warnings
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import f1_score, roc_auc_score, confusion_matrix
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
 
 warnings.filterwarnings('ignore')
 
@@ -150,3 +152,63 @@ def train_random_forest_classifier(X, y):
 
     metrikler = {"F1": f1, "AUC": auc, "CM": cm}
     return metrikler, rf, scaler
+
+def train_xgboost_classifier(X, y):
+    
+    le = LabelEncoder()
+    y_encoded = le.fit_transform(y)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    xgb = XGBClassifier(n_estimators=100, learning_rate=0.1, random_state=42, eval_metric='logloss')
+    xgb.fit(X_train_scaled, y_train)
+    y_pred = xgb.predict(X_test_scaled)
+
+    f1 = f1_score(y_test, y_pred, average='weighted')
+    cm = confusion_matrix(y_test, y_pred)
+
+    try:
+        y_prob = xgb.predict_proba(X_test_scaled)
+        if len(xgb.classes_) == 2:
+            auc = roc_auc_score(y_test, y_prob[:, 1])
+        else:
+            auc = roc_auc_score(y_test, y_prob, multi_class='ovr')
+        auc = round(auc, 4)
+    except:
+        auc = "Hesaplanamadı"
+
+    metrikler = {"F1": f1, "AUC": auc, "CM": cm}
+    return metrikler, xgb, scaler
+
+
+def train_lightgbm_classifier(X, y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    # verbose=-1 parametresi LightGBM'in terminali gereksiz uyarılarla doldurmasını engeller
+    lgbm = LGBMClassifier(n_estimators=100, learning_rate=0.1, random_state=42, verbose=-1)
+    lgbm.fit(X_train_scaled, y_train)
+    y_pred = lgbm.predict(X_test_scaled)
+
+    f1 = f1_score(y_test, y_pred, average='weighted')
+    cm = confusion_matrix(y_test, y_pred)
+
+    try:
+        y_prob = lgbm.predict_proba(X_test_scaled)
+        if len(lgbm.classes_) == 2:
+            auc = roc_auc_score(y_test, y_prob[:, 1])
+        else:
+            auc = roc_auc_score(y_test, y_prob, multi_class='ovr')
+        auc = round(auc, 4)
+    except:
+        auc = "Hesaplanamadı"
+
+    metrikler = {"F1": f1, "AUC": auc, "CM": cm}
+    return metrikler, lgbm, scaler
