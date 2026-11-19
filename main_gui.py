@@ -2,8 +2,16 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 import os
 from data_processor import load_and_prepare_data, get_column_names
-from models_classification import train_logistic_regression, train_svc, train_gaussienbayes, train_knn_classifier, train_random_forest_classifier
-from models_regression import train_linear_regression, train_svr, train_knn_regression, train_random_forest_regression
+from models_classification import (
+    train_logistic_regression, train_svc, train_gaussienbayes,
+    train_knn_classifier, train_random_forest_classifier,
+    train_xgboost_classifier, train_lightgbm_classifier
+)
+from models_regression import (
+    train_linear_regression, train_svr,
+    train_knn_regression, train_random_forest_regression,
+    train_xgboost_regression, train_lightgbm_regression
+)
 
 class AutoMLApp(ctk.CTk):
     def __init__(self):
@@ -36,70 +44,58 @@ class AutoMLApp(ctk.CTk):
         
         # --- 3. MODELLER (Grid Yapısı) ---
         self.frame_modeller = ctk.CTkFrame(self)
-        self.frame_modeller.pack(pady=30, padx=40, fill="both", expand=True)
+        self.frame_modeller.pack(pady=20, padx=40, fill="both", expand=True)
         
-        # Grid yapısını orantılı bölmek için (3 sütun)
         self.frame_modeller.grid_columnconfigure(0, weight=1)
         self.frame_modeller.grid_columnconfigure(1, weight=1)
         self.frame_modeller.grid_columnconfigure(2, weight=1)
         
-        # --- SINIFLANDIRMA MODELLERİ (Mavi - Üst Satırlar) ---
+        # --- SINIFLANDIRMA MODELLERİ (Mavi - 7 Model) ---
         lbl_class = ctk.CTkLabel(self.frame_modeller, text="Classification Models", font=("Arial", 16, "bold"))
-        lbl_class.grid(row=0, column=0, columnspan=3, pady=(15,5))
+        lbl_class.grid(row=0, column=0, columnspan=3, pady=(10, 5))
 
-        self.btn_logistic = ctk.CTkButton(self.frame_modeller, text="Logistic Regression", 
-                                          font=("Arial", 16, "bold"), height=50,
-                                          command=self.run_logistic)
-        self.btn_logistic.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+        self.btn_logistic = ctk.CTkButton(self.frame_modeller, text="Logistic Regression", font=("Arial", 15, "bold"), height=42, command=self.run_logistic)
+        self.btn_logistic.grid(row=1, column=0, padx=10, pady=7, sticky="ew")
         
-        self.btn_svc = ctk.CTkButton(self.frame_modeller, text="SVC", 
-                                     font=("Arial", 16, "bold"), height=50,
-                                     command=self.run_svc)
-        self.btn_svc.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
+        self.btn_svc = ctk.CTkButton(self.frame_modeller, text="SVC", font=("Arial", 15, "bold"), height=42, command=self.run_svc)
+        self.btn_svc.grid(row=1, column=1, padx=10, pady=7, sticky="ew")
         
-        self.btn_gnb = ctk.CTkButton(self.frame_modeller, text="Gaussian NB", 
-                                     font=("Arial", 16, "bold"), height=50,
-                                     command=self.run_gaussienNB)
-        self.btn_gnb.grid(row=1, column=2, padx=10, pady=10, sticky="ew")
+        self.btn_gnb = ctk.CTkButton(self.frame_modeller, text="Gaussian NB", font=("Arial", 15, "bold"), height=42, command=self.run_gaussienNB)
+        self.btn_gnb.grid(row=1, column=2, padx=10, pady=7, sticky="ew")
 
-        self.btn_knn_cls = ctk.CTkButton(self.frame_modeller, text="KNN Classifier", 
-                                         font=("Arial", 16, "bold"), height=50,
-                                         command=self.run_knn_classifier)
-        # Alt satıra ortalayarak (columnspan=2 ile de yapılabilir ama ortadaki sütuna koymak şık olur)
-        self.btn_knn_cls.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+        self.btn_knn_cls = ctk.CTkButton(self.frame_modeller, text="KNN Classifier", font=("Arial", 15, "bold"), height=42, command=self.run_knn_classifier)
+        self.btn_knn_cls.grid(row=2, column=0, padx=10, pady=7, sticky="ew")
 
-        self.btn_rf_cls = ctk.CTkButton(self.frame_modeller, text="Random Forest Classifier", 
-                                        font=("Arial", 16, "bold"), height=50,
-                                        command=self.run_randomforest_classifier)
-        self.btn_rf_cls.grid(row=2, column=1, columnspan=2, padx=10, pady=10, sticky="ew")
+        self.btn_rf_cls = ctk.CTkButton(self.frame_modeller, text="Random Forest Classifier", font=("Arial", 15, "bold"), height=42, command=self.run_randomforest_classifier)
+        self.btn_rf_cls.grid(row=2, column=1, padx=10, pady=7, sticky="ew")
 
-        # --- REGRESYON MODELLERİ (Turuncu - Alt Satırlar) ---
+        self.btn_xgb_cls = ctk.CTkButton(self.frame_modeller, text="XGBoost Classifier", font=("Arial", 15, "bold"), height=42, command=self.run_xgboost_classifier)
+        self.btn_xgb_cls.grid(row=2, column=2, padx=10, pady=7, sticky="ew")
+
+        self.btn_lgbm_cls = ctk.CTkButton(self.frame_modeller, text="LightGBM Classifier", font=("Arial", 15, "bold"), height=42, command=self.run_lightgbm_classifier)
+        self.btn_lgbm_cls.grid(row=3, column=0, columnspan=3, padx=10, pady=7, sticky="ew")
+
+        # --- REGRESYON MODELLERİ (Turuncu - 6 Model) ---
         lbl_reg = ctk.CTkLabel(self.frame_modeller, text="Regression Models", font=("Arial", 16, "bold"))
-        lbl_reg.grid(row=3, column=0, columnspan=3, pady=(25,5))
+        lbl_reg.grid(row=4, column=0, columnspan=3, pady=(18, 5))
 
-        self.btn_linear = ctk.CTkButton(self.frame_modeller, text="Linear Regression", 
-                                        font=("Arial", 16, "bold"), height=50,
-                                        fg_color="#d35400", hover_color="#e67e22", 
-                                        command=self.run_linear)
-        self.btn_linear.grid(row=4, column=0, padx=10, pady=10, sticky="ew")
+        self.btn_linear = ctk.CTkButton(self.frame_modeller, text="Linear Regression", font=("Arial", 15, "bold"), height=42, fg_color="#d35400", hover_color="#e67e22", command=self.run_linear)
+        self.btn_linear.grid(row=5, column=0, padx=10, pady=7, sticky="ew")
         
-        self.btn_svr = ctk.CTkButton(self.frame_modeller, text="SVR", 
-                                     font=("Arial", 16, "bold"), height=50,
-                                     fg_color="#d35400", hover_color="#e67e22", 
-                                     command=self.run_svr)
-        self.btn_svr.grid(row=4, column=1, padx=10, pady=10, sticky="ew")
+        self.btn_svr = ctk.CTkButton(self.frame_modeller, text="SVR", font=("Arial", 15, "bold"), height=42, fg_color="#d35400", hover_color="#e67e22", command=self.run_svr)
+        self.btn_svr.grid(row=5, column=1, padx=10, pady=7, sticky="ew")
 
-        self.btn_knn_reg = ctk.CTkButton(self.frame_modeller, text="KNN Regression", 
-                                         font=("Arial", 16, "bold"), height=50,
-                                         fg_color="#d35400", hover_color="#e67e22", 
-                                         command=self.run_knn_regression)
-        self.btn_knn_reg.grid(row=4, column=2, padx=10, pady=10, sticky="ew")
+        self.btn_knn_reg = ctk.CTkButton(self.frame_modeller, text="KNN Regression", font=("Arial", 15, "bold"), height=42, fg_color="#d35400", hover_color="#e67e22", command=self.run_knn_regression)
+        self.btn_knn_reg.grid(row=5, column=2, padx=10, pady=7, sticky="ew")
 
-        self.btn_rf_reg = ctk.CTkButton(self.frame_modeller, text="Random Forest Regression", 
-                                        font=("Arial", 16, "bold"), height=50,
-                                        fg_color="#d35400", hover_color="#e67e22", 
-                                        command=self.run_randomforest_regression)
-        self.btn_rf_reg.grid(row=5, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
+        self.btn_rf_reg = ctk.CTkButton(self.frame_modeller, text="Random Forest Regression", font=("Arial", 15, "bold"), height=42, fg_color="#d35400", hover_color="#e67e22", command=self.run_randomforest_regression)
+        self.btn_rf_reg.grid(row=6, column=0, padx=10, pady=7, sticky="ew")
+
+        self.btn_xgb_reg = ctk.CTkButton(self.frame_modeller, text="XGBoost Regression", font=("Arial", 15, "bold"), height=42, fg_color="#d35400", hover_color="#e67e22", command=self.run_xgboost_regression)
+        self.btn_xgb_reg.grid(row=6, column=1, padx=10, pady=7, sticky="ew")
+
+        self.btn_lgbm_reg = ctk.CTkButton(self.frame_modeller, text="LightGBM Regression", font=("Arial", 15, "bold"), height=42, fg_color="#d35400", hover_color="#e67e22", command=self.run_lightgbm_regression)
+        self.btn_lgbm_reg.grid(row=6, column=2, padx=10, pady=7, sticky="ew")
         self.secilen_dosya_yolu = None
         
     def dosya_sec(self):
@@ -503,8 +499,107 @@ class AutoMLApp(ctk.CTk):
                                                                    
                         except Exception as e:
                             messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")      
-                      
-                
+
+    def run_xgboost_classifier(self):
+        if not self.secilen_dosya_yolu:
+            messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+            return
+        hedef_sutun = self.combo_hedef.get()
+        if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+            messagebox.showerror("Missing Information", "Please select a valid target column!")
+            return
+        basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)
+        if not basarili_mi:
+            messagebox.showerror("Data Error", sonuc)
+            return
+        X, y = sonuc
+        try:
+            metrikler, model, scaler = train_xgboost_classifier(X, y)
+            self.aktif_model, self.aktif_scaler, self.aktif_model_tipi = model, scaler, "XGBoost Classifier"
+            f1, auc, cm = metrikler["F1"], metrikler["AUC"], metrikler["CM"]
+            mesaj = f"F1 Skoru: {f1:.4f}\nAUC: {auc}\n\nKarmaşıklık Matrisi (Confusion Matrix):\n{cm}"
+            if f1 >= 0.80:
+                messagebox.showinfo("Model Başarılı!", f"Harika! XGBoost Classifier modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+            else:
+                messagebox.showwarning("Düşük Başarı", f"XGBoost Classifier modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+        except Exception as e:
+            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+
+    def run_lightgbm_classifier(self):
+        if not self.secilen_dosya_yolu:
+            messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+            return
+        hedef_sutun = self.combo_hedef.get()
+        if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+            messagebox.showerror("Missing Information", "Please select a valid target column!")
+            return
+        basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)
+        if not basarili_mi:
+            messagebox.showerror("Data Error", sonuc)
+            return
+        X, y = sonuc
+        try:
+            metrikler, model, scaler = train_lightgbm_classifier(X, y)
+            self.aktif_model, self.aktif_scaler, self.aktif_model_tipi = model, scaler, "LightGBM Classifier"
+            f1, auc, cm = metrikler["F1"], metrikler["AUC"], metrikler["CM"]
+            mesaj = f"F1 Skoru: {f1:.4f}\nAUC: {auc}\n\nKarmaşıklık Matrisi (Confusion Matrix):\n{cm}"
+            if f1 >= 0.80:
+                messagebox.showinfo("Model Başarılı!", f"Harika! LightGBM Classifier modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+            else:
+                messagebox.showwarning("Düşük Başarı", f"LightGBM Classifier modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+        except Exception as e:
+            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+
+    def run_xgboost_regression(self):
+        if not self.secilen_dosya_yolu:
+            messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+            return
+        hedef_sutun = self.combo_hedef.get()
+        if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+            messagebox.showerror("Missing Information", "Please select a valid target column!")
+            return
+        basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)
+        if not basarili_mi:
+            messagebox.showerror("Data Error", sonuc)
+            return
+        X, y = sonuc
+        try:
+            metrikler, model, scaler = train_xgboost_regression(X, y)
+            self.aktif_model, self.aktif_scaler, self.aktif_model_tipi = model, scaler, "XGBoost Regression"
+            r2, mae, mse = metrikler["R2"], metrikler["MAE"], metrikler["MSE"]
+            mesaj = f"R2 Skoru: {r2:.4f}\nOrtalama Mutlak Hata (MAE): {mae:.4f}\nOrtalama Kare Hata (MSE): {mse:.4f}"
+            if r2 >= 0.80:
+                messagebox.showinfo("Model Başarılı!", f"Harika! XGBoost Regression modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+            else:
+                messagebox.showwarning("Düşük Başarı", f"XGBoost Regression modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+        except Exception as e:
+            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+
+    def run_lightgbm_regression(self):
+        if not self.secilen_dosya_yolu:
+            messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+            return
+        hedef_sutun = self.combo_hedef.get()
+        if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+            messagebox.showerror("Missing Information", "Please select a valid target column!")
+            return
+        basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)
+        if not basarili_mi:
+            messagebox.showerror("Data Error", sonuc)
+            return
+        X, y = sonuc
+        try:
+            metrikler, model, scaler = train_lightgbm_regression(X, y)
+            self.aktif_model, self.aktif_scaler, self.aktif_model_tipi = model, scaler, "LightGBM Regression"
+            r2, mae, mse = metrikler["R2"], metrikler["MAE"], metrikler["MSE"]
+            mesaj = f"R2 Skoru: {r2:.4f}\nOrtalama Mutlak Hata (MAE): {mae:.4f}\nOrtalama Kare Hata (MSE): {mse:.4f}"
+            if r2 >= 0.80:
+                messagebox.showinfo("Model Başarılı!", f"Harika! LightGBM Regression modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+            else:
+                messagebox.showwarning("Düşük Başarı", f"LightGBM Regression modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+        except Exception as e:
+            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+               
 
 if __name__ == "__main__":
     app = AutoMLApp()
