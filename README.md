@@ -4,8 +4,8 @@ AutoML Studio Pro is a professional desktop application built with Python and `C
 
 ## 🌟 Advanced Features
 - **Modular Architecture:** The project is cleanly separated into GUI (`main_gui.py`), Data Processing (`data_processor.py`), and ML Engines (`models_classification.py`, `models_regression.py`). It provides a scalable and maintainable functional structure, far away from spaghetti code.
-- **9 Core Algorithms:** Performs Classification (Logistic Regression, SVC, Gaussian Naive Bayes, KNN Classifier, Random Forest Classifier) and Regression (Linear Regression, SVR, KNN Regression, Random Forest Regression) tasks with a single click.
-- **Auto-Scaling:** Automatically aligns all data with `StandardScaler` prior to training to prevent mathematical crashes in distance-based models (SVC/SVR/KNN).
+- **13 Core Algorithms:** Performs Classification (Logistic Regression, SVC, Gaussian Naive Bayes, KNN Classifier, Random Forest Classifier, XGBoost Classifier, LightGBM Classifier) and Regression (Linear Regression, SVR, KNN Regression, Random Forest Regression, XGBoost Regression, LightGBM Regression) tasks with a single click.
+- **Auto-Scaling & Target Encoding:** Automatically aligns all features with `StandardScaler` prior to training to prevent mathematical crashes in distance-based models (SVC/SVR/KNN), and applies `LabelEncoder` on target classes to ensure seamless compatibility with strict gradient boosting engines like XGBoost.
 - **Comprehensive Model Analysis:** Evaluates models using a true data scientist approach rather than a single score, providing detailed reports:
   - **For Classification:** `Weighted F1-Score` for imbalanced datasets, `AUC (Area Under the Curve)` for probability separation success, and `Confusion Matrix` for prediction details.
   - **For Regression:** `R2-Score` for the model's data explanation variance, along with `MAE (Mean Absolute Error)` and `MSE (Mean Squared Error)` to observe the average deviation.
@@ -15,12 +15,12 @@ AutoML Studio Pro is a professional desktop application built with Python and `C
 Using the application is extremely simple:
 1. **Load Data:** Click the *"📂 Select Data File (.csv / .xlsx)"* button on the interface and choose the dataset on your computer. The system will read the file and detect column headers in milliseconds.
 2. **Set Target:** Select the **Target Column** you want to predict from the dropdown menu.
-3. **Ignite the Model:** Click one of the 9 buttons at the bottom depending on your dataset type:
+3. **Ignite the Model:** Click one of the 13 buttons at the bottom depending on your dataset type:
    * If your target is a category (e.g., Sick/Healthy, Spam/Not Spam), use the **Blue (Classification)** buttons.
    * If your target is a numerical value (e.g., House Price, Temperature), use the **Orange (Regression)** buttons.
 4. **Review Results:** The model will be trained in seconds, and a stylish popup report containing advanced metrics like AUC, MAE, R2, and Confusion Matrix will appear on your screen.
 
-## 🛠️ Data Requirements (Version V1.1)
+## 🛠️ Data Requirements (Version V1.2)
 This version has a strict and secure data acceptance mechanism to reduce the mathematical error margin to zero. To get the best results, your dataset must comply with the following rules:
 1. **Format:** Only `.csv` and `.xlsx` file extensions are supported.
 2. **Numeric Data Only:** The dataset must **not** contain text (string) based categorical variables such as "Yes/No" or "Male/Female". Users must convert these texts to numbers (Label Encoding) in their Excel/CSV files before loading them into the application. To prevent system crashes, the engine automatically ignores columns containing text.
@@ -29,7 +29,7 @@ This version has a strict and secure data acceptance mechanism to reduce the mat
 ## 🚀 Installation and Execution
 1. After downloading the project to your local machine, install the required libraries:
 ```bash
-pip install pandas scikit-learn customtkinter openpyxl
+pip install pandas scikit-learn customtkinter openpyxl xgboost lightgbm
 ```
 
 2. Run the main interface file:
