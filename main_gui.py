@@ -17,7 +17,7 @@ class AutoMLApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         
-      # Main Window Settings
+        # Main Window Settings
         self.title("AutoML Studio Pro")
         self.geometry("1200x800")
         ctk.set_appearance_mode("dark")
@@ -42,7 +42,7 @@ class AutoMLApp(ctk.CTk):
         self.label_dosya_yolu = ctk.CTkLabel(self, text="Selected File: None", text_color="gray", font=("Arial", 14))
         self.label_dosya_yolu.pack(pady=10)
         
-        # --- 3. MODELLER (Grid Yapısı) ---
+        # --- 3. MODELS (Grid Layout) ---
         self.frame_modeller = ctk.CTkFrame(self)
         self.frame_modeller.pack(pady=20, padx=40, fill="both", expand=True)
         
@@ -50,7 +50,7 @@ class AutoMLApp(ctk.CTk):
         self.frame_modeller.grid_columnconfigure(1, weight=1)
         self.frame_modeller.grid_columnconfigure(2, weight=1)
         
-        # --- SINIFLANDIRMA MODELLERİ (Mavi - 7 Model) ---
+        # --- CLASSIFICATION MODELS (Blue - 7 Models) ---
         lbl_class = ctk.CTkLabel(self.frame_modeller, text="Classification Models", font=("Arial", 16, "bold"))
         lbl_class.grid(row=0, column=0, columnspan=3, pady=(10, 5))
 
@@ -75,7 +75,7 @@ class AutoMLApp(ctk.CTk):
         self.btn_lgbm_cls = ctk.CTkButton(self.frame_modeller, text="LightGBM Classifier", font=("Arial", 15, "bold"), height=42, command=self.run_lightgbm_classifier)
         self.btn_lgbm_cls.grid(row=3, column=0, columnspan=3, padx=10, pady=7, sticky="ew")
 
-        # --- REGRESYON MODELLERİ (Turuncu - 6 Model) ---
+        # --- REGRESSION MODELS (Orange - 6 Models) ---
         lbl_reg = ctk.CTkLabel(self.frame_modeller, text="Regression Models", font=("Arial", 16, "bold"))
         lbl_reg.grid(row=4, column=0, columnspan=3, pady=(18, 5))
 
@@ -96,6 +96,7 @@ class AutoMLApp(ctk.CTk):
 
         self.btn_lgbm_reg = ctk.CTkButton(self.frame_modeller, text="LightGBM Regression", font=("Arial", 15, "bold"), height=42, fg_color="#d35400", hover_color="#e67e22", command=self.run_lightgbm_regression)
         self.btn_lgbm_reg.grid(row=6, column=2, padx=10, pady=7, sticky="ew")
+        
         self.secilen_dosya_yolu = None
         
     def dosya_sec(self):
@@ -121,51 +122,45 @@ class AutoMLApp(ctk.CTk):
                 self.combo_hedef.set("Error Occurred")
 
     def run_logistic(self):
-        # 1. SECURITY CHECKS: Is a file selected? Is a target column entered?
+        # 1. SECURITY CHECKS
         if not self.secilen_dosya_yolu:
             messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
             return
             
         hedef_sutun = self.combo_hedef.get() 
-        # Önceki kodda İngilizceye çevirdiğimiz açılır menü uyarılarıyla birebir aynı olmalı ki hata vermesin:
         if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
             messagebox.showerror("Missing Information", "Please select a valid target column!")
             return
 
-        # 2. DATA PROCESSING: Sending the file to data_processor and getting X and y
+        # 2. DATA PROCESSING
         basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)
-        
         if not basarili_mi:
-            # If the process fails, display the error message from the 'sonuc' variable and stop.
             messagebox.showerror("Data Error", sonuc)
             return
             
-        # If successful, unpack X and y
         X, y = sonuc
         
-        # 3. ENGINE IGNITION: Send X and y to the Logistic Regression engine
+        # 3. ENGINE IGNITION
         try:
-            # Artık skor değil, 'metrikler' sözlüğü geliyor
             metrikler, model, scaler = train_logistic_regression(X, y)
             
             self.aktif_model = model
             self.aktif_scaler = scaler
             self.aktif_model_tipi = "Classification"
             
-            # Paketleri açıyoruz
             f1 = metrikler["F1"]
             auc = metrikler["AUC"]
             cm = metrikler["CM"]
             
-            mesaj = f"F1 Skoru: {f1:.4f}\nAUC: {auc}\n\nKarmaşıklık Matrisi (Confusion Matrix):\n{cm}"
+            mesaj = f"F1 Score: {f1:.4f}\nAUC: {auc}\n\nConfusion Matrix:\n{cm}"
             
             if f1 >= 0.80:
-                messagebox.showinfo("Model Başarılı!", f"Harika! Logistik Regresyon modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                messagebox.showinfo("Training Successful!", f"Great! Logistic Regression model trained with high performance.\n\n{mesaj}")
             else:
-                messagebox.showwarning("Düşük Başarı", f"Logistik Regresyon modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+                messagebox.showwarning("Low Performance", f"Logistic Regression model trained, but the score is low.\n\n{mesaj}")
                                        
         except Exception as e:
-            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")
 
     def run_svc(self):
         # 1. SECURITY CHECKS
@@ -174,7 +169,6 @@ class AutoMLApp(ctk.CTk):
             return
         
         hedef_sutun = self.combo_hedef.get() 
-        # Açılır menüdeki İngilizce uyarılarla eşleşmesi için burayı da güncelledik:
         if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
             messagebox.showerror("Missing Information", "Please select a valid target column!")
             return
@@ -188,29 +182,26 @@ class AutoMLApp(ctk.CTk):
         X, y = sonuc
 
         # 3. ENGINE IGNITION
-        # 3. MOTORU ATEŞLEME (Sınıflandırma Örneği)
         try:
-            # Artık skor değil, 'metrikler' sözlüğü geliyor
             metrikler, model, scaler = train_svc(X, y)
             
             self.aktif_model = model
             self.aktif_scaler = scaler
             self.aktif_model_tipi = "Classification"
             
-            # Paketleri açıyoruz
             f1 = metrikler["F1"]
             auc = metrikler["AUC"]
             cm = metrikler["CM"]
             
-            mesaj = f"F1 Skoru: {f1:.4f}\nAUC: {auc}\n\nKarmaşıklık Matrisi (Confusion Matrix):\n{cm}"
+            mesaj = f"F1 Score: {f1:.4f}\nAUC: {auc}\n\nConfusion Matrix:\n{cm}"
             
             if f1 >= 0.80:
-                messagebox.showinfo("Model Başarılı!", f"Harika! SVC modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                messagebox.showinfo("Training Successful!", f"Great! SVC model trained with high performance.\n\n{mesaj}")
             else:
-                messagebox.showwarning("Düşük Başarı", f"SVC modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+                messagebox.showwarning("Low Performance", f"SVC model trained, but the score is low.\n\n{mesaj}")
                                        
         except Exception as e:
-            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")
 
     def run_linear(self):
         # 1. SECURITY CHECKS
@@ -219,7 +210,6 @@ class AutoMLApp(ctk.CTk):
             return
         
         hedef_sutun = self.combo_hedef.get() 
-        # Açılır menüdeki İngilizce uyarılarla eşleşmesi için burayı da güncelledik:
         if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
             messagebox.showerror("Missing Information", "Please select a valid target column!")
             return
@@ -244,15 +234,15 @@ class AutoMLApp(ctk.CTk):
             mae = metrikler["MAE"]
             mse = metrikler["MSE"]
             
-            mesaj = f"R2 Skoru: {r2:.4f}\nOrtalama Mutlak Hata (MAE): {mae:.4f}\nOrtalama Kare Hata (MSE): {mse:.4f}"
+            mesaj = f"R2 Score: {r2:.4f}\nMean Absolute Error (MAE): {mae:.4f}\nMean Squared Error (MSE): {mse:.4f}"
 
             if r2 >= 0.80:
-                messagebox.showinfo("Model Başarılı!", f"Harika! Lineer Regresyon modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                messagebox.showinfo("Training Successful!", f"Great! Linear Regression model trained with high performance.\n\n{mesaj}")
             else:
-                messagebox.showwarning("Düşük Başarı", f"Lineer Regresyon modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+                messagebox.showwarning("Low Performance", f"Linear Regression model trained, but the score is low.\n\n{mesaj}")
                                        
         except Exception as e:
-            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")
 
     def run_svr(self):
         # 1. SECURITY CHECKS
@@ -285,220 +275,220 @@ class AutoMLApp(ctk.CTk):
             mae = metrikler["MAE"]
             mse = metrikler["MSE"]
             
-            mesaj = f"R2 Skoru: {r2:.4f}\nOrtalama Mutlak Hata (MAE): {mae:.4f}\nOrtalama Kare Hata (MSE): {mse:.4f}"
+            mesaj = f"R2 Score: {r2:.4f}\nMean Absolute Error (MAE): {mae:.4f}\nMean Squared Error (MSE): {mse:.4f}"
 
             if r2 >= 0.80:
-                messagebox.showinfo("Model Başarılı!", f"Harika! SVR modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                messagebox.showinfo("Training Successful!", f"Great! SVR model trained with high performance.\n\n{mesaj}")
             else:
-                messagebox.showwarning("Düşük Başarı", f"SVR modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+                messagebox.showwarning("Low Performance", f"SVR model trained, but the score is low.\n\n{mesaj}")
                                        
         except Exception as e:
-            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")
 
     def run_gaussienNB(self):
         # 1. SECURITY CHECKS
-                if not self.secilen_dosya_yolu:
-                    messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
-                    return
-                
-                hedef_sutun = self.combo_hedef.get() 
-                if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
-                    messagebox.showerror("Missing Information", "Please select a valid target column!")
-                    return
-                
-                # 2. DATA PREPARATION
-                basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
-                if not basarili_mi:
-                    messagebox.showerror("Data Error", sonuc)
-                    return
-                    
-                X, y = sonuc
+        if not self.secilen_dosya_yolu:
+            messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+            return
         
-                # 3. ENGINE IGNITION
-                try: 
-                    metrikler, model, scaler = train_gaussienbayes(X,y)
-                    
-                    self.aktif_model = model
-                    self.aktif_scaler = scaler
-                    self.aktif_model_tipi = "GaussienNB"
+        hedef_sutun = self.combo_hedef.get() 
+        if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+            messagebox.showerror("Missing Information", "Please select a valid target column!")
+            return
         
-                    f1 = metrikler["F1"]
-                    auc = metrikler["AUC"]
-                    cm = metrikler["CM"]
-                    
-                    mesaj = f"F1 Skoru: {f1:.4f}\nAUC: {auc}\n\nKarmaşıklık Matrisi (Confusion Matrix):\n{cm}"
-                                
-                    if f1 >= 0.80:
-                        messagebox.showinfo("Model Başarılı!", f"Harika! GaussienNB modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
-                    else:
-                        messagebox.showwarning("Düşük Başarı", f"GaussienNB modeli başarıyla eğitildi ancak skor düşük.\n\n{mesaj}")
-                                                           
-                except Exception as e:
-                    messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+        # 2. DATA PREPARATION
+        basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
+        if not basarili_mi:
+            messagebox.showerror("Data Error", sonuc)
+            return
+            
+        X, y = sonuc
+
+        # 3. ENGINE IGNITION
+        try: 
+            metrikler, model, scaler = train_gaussienbayes(X, y)
+            
+            self.aktif_model = model
+            self.aktif_scaler = scaler
+            self.aktif_model_tipi = "GaussienNB"
+
+            f1 = metrikler["F1"]
+            auc = metrikler["AUC"]
+            cm = metrikler["CM"]
+            
+            mesaj = f"F1 Score: {f1:.4f}\nAUC: {auc}\n\nConfusion Matrix:\n{cm}"
+                        
+            if f1 >= 0.80:
+                messagebox.showinfo("Training Successful!", f"Great! Gaussian NB model trained with high performance.\n\n{mesaj}")
+            else:
+                messagebox.showwarning("Low Performance", f"Gaussian NB model trained, but the score is low.\n\n{mesaj}")
+                                                   
+        except Exception as e:
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")
 
     def run_knn_classifier(self):
-            # 1. SECURITY CHECKS
-                if not self.secilen_dosya_yolu:
-                    messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
-                    return
-                
-                hedef_sutun = self.combo_hedef.get() 
-                if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
-                    messagebox.showerror("Missing Information", "Please select a valid target column!")
-                    return
-                
-                # 2. DATA PREPARATION
-                basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
-                if not basarili_mi:
-                    messagebox.showerror("Data Error", sonuc)
-                    return
-                    
-                X, y = sonuc
+        # 1. SECURITY CHECKS
+        if not self.secilen_dosya_yolu:
+            messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+            return
         
-                # 3. ENGINE IGNITION
-                try: 
-                    metrikler, model, scaler = train_knn_classifier(X,y)
-                    
-                    self.aktif_model = model
-                    self.aktif_scaler = scaler
-                    self.aktif_model_tipi = "KNN Classifier"
+        hedef_sutun = self.combo_hedef.get() 
+        if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+            messagebox.showerror("Missing Information", "Please select a valid target column!")
+            return
         
-                    f1 = metrikler["F1"]
-                    auc = metrikler["AUC"]
-                    cm = metrikler["CM"]
-                    
-                    mesaj = f"F1 Skoru: {f1:.4f}\nAUC: {auc}\n\nKarmaşıklık Matrisi (Confusion Matrix):\n{cm}"
+        # 2. DATA PREPARATION
+        basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
+        if not basarili_mi:
+            messagebox.showerror("Data Error", sonuc)
+            return
+            
+        X, y = sonuc
+
+        # 3. ENGINE IGNITION
+        try: 
+            metrikler, model, scaler = train_knn_classifier(X, y)
+            
+            self.aktif_model = model
+            self.aktif_scaler = scaler
+            self.aktif_model_tipi = "KNN Classifier"
+
+            f1 = metrikler["F1"]
+            auc = metrikler["AUC"]
+            cm = metrikler["CM"]
+            
+            mesaj = f"F1 Score: {f1:.4f}\nAUC: {auc}\n\nConfusion Matrix:\n{cm}"
+                        
+            if f1 >= 0.80:
+                messagebox.showinfo("Training Successful!", f"Great! KNN Classifier model trained with high performance.\n\n{mesaj}")
+            else:
+                messagebox.showwarning("Low Performance", f"KNN Classifier model trained, but the score is low.\n\n{mesaj}")
+                                                   
+        except Exception as e:
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")      
                                 
-                    if f1 >= 0.80:
-                        messagebox.showinfo("Model Başarılı!", f"Harika! KNN Classifier modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
-                    else:
-                        messagebox.showwarning("Düşük Başarı", f"KNN Classifier modeli başarıyla eğitildi ancak skor düşük.\n\n{mesaj}")
-                                                           
-                except Exception as e:
-                    messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")      
-                                        
     def run_randomforest_classifier(self):
-                # 1. SECURITY CHECKS
-                    if not self.secilen_dosya_yolu:
-                        messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
-                        return
-                    
-                    hedef_sutun = self.combo_hedef.get() 
-                    if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
-                        messagebox.showerror("Missing Information", "Please select a valid target column!")
-                        return
-                    
-                    # 2. DATA PREPARATION
-                    basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
-                    if not basarili_mi:
-                        messagebox.showerror("Data Error", sonuc)
-                        return
-                        
-                    X, y = sonuc
+        # 1. SECURITY CHECKS
+        if not self.secilen_dosya_yolu:
+            messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+            return
+        
+        hedef_sutun = self.combo_hedef.get() 
+        if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+            messagebox.showerror("Missing Information", "Please select a valid target column!")
+            return
+        
+        # 2. DATA PREPARATION
+        basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
+        if not basarili_mi:
+            messagebox.showerror("Data Error", sonuc)
+            return
             
-                    # 3. ENGINE IGNITION
-                    try: 
-                        metrikler, model, scaler = train_random_forest_classifier(X,y)
-                        
-                        self.aktif_model = model
-                        self.aktif_scaler = scaler
-                        self.aktif_model_tipi = "Random Forest Classifier"
+        X, y = sonuc
+
+        # 3. ENGINE IGNITION
+        try: 
+            metrikler, model, scaler = train_random_forest_classifier(X, y)
             
-                        f1 = metrikler["F1"]
-                        auc = metrikler["AUC"]
-                        cm = metrikler["CM"]
+            self.aktif_model = model
+            self.aktif_scaler = scaler
+            self.aktif_model_tipi = "Random Forest Classifier"
+
+            f1 = metrikler["F1"]
+            auc = metrikler["AUC"]
+            cm = metrikler["CM"]
+            
+            mesaj = f"F1 Score: {f1:.4f}\nAUC: {auc}\n\nConfusion Matrix:\n{cm}"
                         
-                        mesaj = f"F1 Skoru: {f1:.4f}\nAUC: {auc}\n\nKarmaşıklık Matrisi (Confusion Matrix):\n{cm}"
-                                    
-                        if f1 >= 0.80:
-                            messagebox.showinfo("Model Başarılı!", f"Harika! Random Forest Classifier modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
-                        else:
-                            messagebox.showwarning("Düşük Başarı", f"Random Forest Classifier modeli başarıyla eğitildi ancak skor düşük.\n\n{mesaj}")
-                                                               
-                    except Exception as e:
-                        messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")      
-               
+            if f1 >= 0.80:
+                messagebox.showinfo("Training Successful!", f"Great! Random Forest Classifier model trained with high performance.\n\n{mesaj}")
+            else:
+                messagebox.showwarning("Low Performance", f"Random Forest Classifier model trained, but the score is low.\n\n{mesaj}")
+                                                   
+        except Exception as e:
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")      
+       
     def run_knn_regression(self):
-                # 1. SECURITY CHECKS
-                    if not self.secilen_dosya_yolu:
-                        messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
-                        return
-                    
-                    hedef_sutun = self.combo_hedef.get() 
-                    if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
-                        messagebox.showerror("Missing Information", "Please select a valid target column!")
-                        return
-                    
-                    # 2. DATA PREPARATION
-                    basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
-                    if not basarili_mi:
-                        messagebox.showerror("Data Error", sonuc)
-                        return
-                        
-                    X, y = sonuc
+        # 1. SECURITY CHECKS
+        if not self.secilen_dosya_yolu:
+            messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+            return
+        
+        hedef_sutun = self.combo_hedef.get() 
+        if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+            messagebox.showerror("Missing Information", "Please select a valid target column!")
+            return
+        
+        # 2. DATA PREPARATION
+        basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
+        if not basarili_mi:
+            messagebox.showerror("Data Error", sonuc)
+            return
             
-                    # 3. ENGINE IGNITION
-                    try: 
-                        metrikler, model, scaler = train_knn_regression(X,y)
-                        
-                        self.aktif_model = model
-                        self.aktif_scaler = scaler
-                        self.aktif_model_tipi = "KNN Regression"
+        X, y = sonuc
+
+        # 3. ENGINE IGNITION
+        try: 
+            metrikler, model, scaler = train_knn_regression(X, y)
             
-                        r2 = metrikler["R2"]
-                        mae = metrikler["MAE"]
-                        mse = metrikler["MSE"]
+            self.aktif_model = model
+            self.aktif_scaler = scaler
+            self.aktif_model_tipi = "KNN Regression"
+
+            r2 = metrikler["R2"]
+            mae = metrikler["MAE"]
+            mse = metrikler["MSE"]
+            
+            mesaj = f"R2 Score: {r2:.4f}\nMean Absolute Error (MAE): {mae:.4f}\nMean Squared Error (MSE): {mse:.4f}"
                         
-                        mesaj = f"R2 Skoru: {r2:.4f}\nOrtalama Mutlak Hata (MAE): {mae:.4f}\nOrtalama Kare Hata (MSE): {mse:.4f}"
-                                    
-                        if r2 >= 0.80:
-                            messagebox.showinfo("Model Başarılı!", f"Harika! KNN Regression modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
-                        else:
-                            messagebox.showwarning("Düşük Başarı", f"KNN Regression modeli başarıyla eğitildi ancak skor düşük.\n\n{mesaj}")
-                                                               
-                    except Exception as e:
-                        messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")      
-                                               
+            if r2 >= 0.80:
+                messagebox.showinfo("Training Successful!", f"Great! KNN Regression model trained with high performance.\n\n{mesaj}")
+            else:
+                messagebox.showwarning("Low Performance", f"KNN Regression model trained, but the score is low.\n\n{mesaj}")
+                                                   
+        except Exception as e:
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")      
+                                   
     def run_randomforest_regression(self):
-                    # 1. SECURITY CHECKS
-                        if not self.secilen_dosya_yolu:
-                            messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
-                            return
+        # 1. SECURITY CHECKS
+        if not self.secilen_dosya_yolu:
+            messagebox.showerror("Missing Information", "Please select a data file (.csv/.xlsx) first!")
+            return
+        
+        hedef_sutun = self.combo_hedef.get() 
+        if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
+            messagebox.showerror("Missing Information", "Please select a valid target column!")
+            return
+        
+        # 2. DATA PREPARATION
+        basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
+        if not basarili_mi:
+            messagebox.showerror("Data Error", sonuc)
+            return
+            
+        X, y = sonuc
+
+        # 3. ENGINE IGNITION
+        try: 
+            metrikler, model, scaler = train_random_forest_regression(X, y)
+            
+            self.aktif_model = model
+            self.aktif_scaler = scaler
+            self.aktif_model_tipi = "Random Forest Regression"
+
+            r2 = metrikler["R2"]
+            mae = metrikler["MAE"]
+            mse = metrikler["MSE"]
+            
+            mesaj = f"R2 Score: {r2:.4f}\nMean Absolute Error (MAE): {mae:.4f}\nMean Squared Error (MSE): {mse:.4f}"
                         
-                        hedef_sutun = self.combo_hedef.get() 
-                        if hedef_sutun == "Please select a file first..." or hedef_sutun == "Error Occurred":
-                            messagebox.showerror("Missing Information", "Please select a valid target column!")
-                            return
-                        
-                        # 2. DATA PREPARATION
-                        basarili_mi, sonuc = load_and_prepare_data(self.secilen_dosya_yolu, hedef_sutun)       
-                        if not basarili_mi:
-                            messagebox.showerror("Data Error", sonuc)
-                            return
-                            
-                        X, y = sonuc
-                
-                        # 3. ENGINE IGNITION
-                        try: 
-                            metrikler, model, scaler = train_random_forest_regression(X,y)
-                            
-                            self.aktif_model = model
-                            self.aktif_scaler = scaler
-                            self.aktif_model_tipi = "Random Forest Regression"
-                
-                            r2 = metrikler["R2"]
-                            mae = metrikler["MAE"]
-                            mse = metrikler["MSE"]
-                            
-                            mesaj = f"R2 Skoru: {r2:.4f}\nOrtalama Mutlak Hata (MAE): {mae:.4f}\nOrtalama Kare Hata (MSE): {mse:.4f}"
-                                        
-                            if r2 >= 0.80:
-                                messagebox.showinfo("Model Başarılı!", f"Harika! Random Forest Regression modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
-                            else:
-                                messagebox.showwarning("Düşük Başarı", f"Random Forest Regression modeli başarıyla eğitildi ancak skor düşük.\n\n{mesaj}")
-                                                                   
-                        except Exception as e:
-                            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")      
+            if r2 >= 0.80:
+                messagebox.showinfo("Training Successful!", f"Great! Random Forest Regression model trained with high performance.\n\n{mesaj}")
+            else:
+                messagebox.showwarning("Low Performance", f"Random Forest Regression model trained, but the score is low.\n\n{mesaj}")
+                                                   
+        except Exception as e:
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")      
 
     def run_xgboost_classifier(self):
         if not self.secilen_dosya_yolu:
@@ -517,13 +507,13 @@ class AutoMLApp(ctk.CTk):
             metrikler, model, scaler = train_xgboost_classifier(X, y)
             self.aktif_model, self.aktif_scaler, self.aktif_model_tipi = model, scaler, "XGBoost Classifier"
             f1, auc, cm = metrikler["F1"], metrikler["AUC"], metrikler["CM"]
-            mesaj = f"F1 Skoru: {f1:.4f}\nAUC: {auc}\n\nKarmaşıklık Matrisi (Confusion Matrix):\n{cm}"
+            mesaj = f"F1 Score: {f1:.4f}\nAUC: {auc}\n\nConfusion Matrix:\n{cm}"
             if f1 >= 0.80:
-                messagebox.showinfo("Model Başarılı!", f"Harika! XGBoost Classifier modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                messagebox.showinfo("Training Successful!", f"Great! XGBoost Classifier model trained with high performance.\n\n{mesaj}")
             else:
-                messagebox.showwarning("Düşük Başarı", f"XGBoost Classifier modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+                messagebox.showwarning("Low Performance", f"XGBoost Classifier model trained, but the score is low.\n\n{mesaj}")
         except Exception as e:
-            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")
 
     def run_lightgbm_classifier(self):
         if not self.secilen_dosya_yolu:
@@ -542,13 +532,13 @@ class AutoMLApp(ctk.CTk):
             metrikler, model, scaler = train_lightgbm_classifier(X, y)
             self.aktif_model, self.aktif_scaler, self.aktif_model_tipi = model, scaler, "LightGBM Classifier"
             f1, auc, cm = metrikler["F1"], metrikler["AUC"], metrikler["CM"]
-            mesaj = f"F1 Skoru: {f1:.4f}\nAUC: {auc}\n\nKarmaşıklık Matrisi (Confusion Matrix):\n{cm}"
+            mesaj = f"F1 Score: {f1:.4f}\nAUC: {auc}\n\nConfusion Matrix:\n{cm}"
             if f1 >= 0.80:
-                messagebox.showinfo("Model Başarılı!", f"Harika! LightGBM Classifier modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                messagebox.showinfo("Training Successful!", f"Great! LightGBM Classifier model trained with high performance.\n\n{mesaj}")
             else:
-                messagebox.showwarning("Düşük Başarı", f"LightGBM Classifier modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+                messagebox.showwarning("Low Performance", f"LightGBM Classifier model trained, but the score is low.\n\n{mesaj}")
         except Exception as e:
-            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")
 
     def run_xgboost_regression(self):
         if not self.secilen_dosya_yolu:
@@ -567,13 +557,13 @@ class AutoMLApp(ctk.CTk):
             metrikler, model, scaler = train_xgboost_regression(X, y)
             self.aktif_model, self.aktif_scaler, self.aktif_model_tipi = model, scaler, "XGBoost Regression"
             r2, mae, mse = metrikler["R2"], metrikler["MAE"], metrikler["MSE"]
-            mesaj = f"R2 Skoru: {r2:.4f}\nOrtalama Mutlak Hata (MAE): {mae:.4f}\nOrtalama Kare Hata (MSE): {mse:.4f}"
+            mesaj = f"R2 Score: {r2:.4f}\nMean Absolute Error (MAE): {mae:.4f}\nMean Squared Error (MSE): {mse:.4f}"
             if r2 >= 0.80:
-                messagebox.showinfo("Model Başarılı!", f"Harika! XGBoost Regression modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                messagebox.showinfo("Training Successful!", f"Great! XGBoost Regression model trained with high performance.\n\n{mesaj}")
             else:
-                messagebox.showwarning("Düşük Başarı", f"XGBoost Regression modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+                messagebox.showwarning("Low Performance", f"XGBoost Regression model trained, but the score is low.\n\n{mesaj}")
         except Exception as e:
-            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")
 
     def run_lightgbm_regression(self):
         if not self.secilen_dosya_yolu:
@@ -592,15 +582,13 @@ class AutoMLApp(ctk.CTk):
             metrikler, model, scaler = train_lightgbm_regression(X, y)
             self.aktif_model, self.aktif_scaler, self.aktif_model_tipi = model, scaler, "LightGBM Regression"
             r2, mae, mse = metrikler["R2"], metrikler["MAE"], metrikler["MSE"]
-            mesaj = f"R2 Skoru: {r2:.4f}\nOrtalama Mutlak Hata (MAE): {mae:.4f}\nOrtalama Kare Hata (MSE): {mse:.4f}"
+            mesaj = f"R2 Score: {r2:.4f}\nMean Absolute Error (MAE): {mae:.4f}\nMean Squared Error (MSE): {mse:.4f}"
             if r2 >= 0.80:
-                messagebox.showinfo("Model Başarılı!", f"Harika! LightGBM Regression modeli yüksek başarıyla eğitildi.\n\n{mesaj}")
+                messagebox.showinfo("Training Successful!", f"Great! LightGBM Regression model trained with high performance.\n\n{mesaj}")
             else:
-                messagebox.showwarning("Düşük Başarı", f"LightGBM Regression modeli eğitildi ancak skor düşük.\n\n{mesaj}")
+                messagebox.showwarning("Low Performance", f"LightGBM Regression model trained, but the score is low.\n\n{mesaj}")
         except Exception as e:
-            messagebox.showerror("Engine Error", f"Hata:\n{str(e)}")
-               
-
+            messagebox.showerror("Engine Error", f"Error:\n{str(e)}")
 if __name__ == "__main__":
     app = AutoMLApp()
     app.mainloop()

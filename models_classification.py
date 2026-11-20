@@ -35,7 +35,7 @@ def train_logistic_regression(X, y):
             auc = roc_auc_score(y_test, y_prob, multi_class='ovr')
         auc = round(auc, 4)
     except:
-        auc = "Hesaplanamadı"
+        auc = "N/A"
 
     # Tek skor yerine tüm metrikleri paketleyip gönderiyoruz
     metrikler = {"F1": f1, "AUC": auc, "CM": cm}
@@ -65,7 +65,7 @@ def train_svc(X, y):
             auc = roc_auc_score(y_test, y_prob, multi_class='ovr')
         auc = round(auc, 4)
     except:
-        auc = "Hesaplanamadı"
+        auc = "N/A"
 
     metrikler = {"F1": f1, "AUC": auc, "CM": cm}
     return metrikler, svc, scaler
@@ -91,7 +91,7 @@ def train_gaussienbayes(X,y):
             auc = roc_auc_score(y_test, y_prob, multi_class='ovr')
         auc = round(auc, 4)
     except:
-        auc = "Hesaplanamadı"
+        auc = "N/A"
 
     metrikler = {"F1": f1, "AUC": auc, "CM": cm}
     return metrikler, gnb, scaler
@@ -120,7 +120,7 @@ def train_knn_classifier(X, y):
             auc = roc_auc_score(y_test, y_prob, multi_class='ovr')
         auc = round(auc, 4)
     except:
-        auc = "Hesaplanamadı"
+        auc = "N/A"
 
     metrikler = {"F1": f1, "AUC": auc, "CM": cm}
     return metrikler, knn, scaler
@@ -148,7 +148,7 @@ def train_random_forest_classifier(X, y):
             auc = roc_auc_score(y_test, y_prob, multi_class='ovr')
         auc = round(auc, 4)
     except:
-        auc = "Hesaplanamadı"
+        auc = "N/A"
 
     metrikler = {"F1": f1, "AUC": auc, "CM": cm}
     return metrikler, rf, scaler
@@ -179,7 +179,7 @@ def train_xgboost_classifier(X, y):
             auc = roc_auc_score(y_test, y_prob, multi_class='ovr')
         auc = round(auc, 4)
     except:
-        auc = "Hesaplanamadı"
+        auc = "N/A"
 
     metrikler = {"F1": f1, "AUC": auc, "CM": cm}
     return metrikler, xgb, scaler
@@ -208,7 +208,7 @@ def train_lightgbm_classifier(X, y):
             auc = roc_auc_score(y_test, y_prob, multi_class='ovr')
         auc = round(auc, 4)
     except:
-        auc = "Hesaplanamadı"
+        auc = "N/A"
 
     metrikler = {"F1": f1, "AUC": auc, "CM": cm}
     return metrikler, lgbm, scaler
